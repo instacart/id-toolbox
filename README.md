@@ -1,4 +1,4 @@
-# Instacart Security Identity Toolbox (id-toolbox)
+# Instacart Identity Toolbox (id-toolbox)
 
 A collection of AI-powered identity and access management tools developed by the Instacart Security Team.
 
