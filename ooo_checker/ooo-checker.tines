@@ -9,22 +9,33 @@
 // 4. Uses AI to determine if the Slack status indicates the user is OOO
 // 5. If approver is likely OOO, reassigns the task to their manager
 //
-// Note: No actual credentials are stored in this file - credentials are referenced as <<CREDENTIAL.*>> and
+// Note: No actual credentials are stored in this file - credentials are referenced as <<CREDENTIAL>> and
 // are securely managed within the Tines platform.
 
 {
-  "standardLibVersion": "82",
-  "actionRuntimeVersion": "34",
+  "standardLibVersion": "83",
+  "actionRuntimeVersion": "35",
   "agents": [
     {
       "disabled": false,
       "name": "Search Tasks that are OPEN",
       "description": null,
-      "options": "{\"url\":\"https://DOMAIN.conductor.one/api/v1/search/tasks\",\"content_type\":\"application_json\",\"method\":\"post\",\"payload\":{\"taskStates\":[\"TASK_STATE_OPEN\"],\"taskTypes\":[{\"grant\":{}}],\"expandMask\":{\"paths\":[\"*\"]},\"currentStep\":\"TASK_SEARCH_CURRENT_STEP_APPROVAL\",\"createdAfter\":\"=DATE(\\\"60 minutes ago\\\")\"},\"headers\":{\"Authorization\":\"Bearer <<CREDENTIAL.c1>>\"}}",
-      "position": {
-        "x": 735,
-        "y": 195
+      "options": {
+        "url": "https://api.conductor.one/api/v1/search/tasks",
+        "content_type": "application_json",
+        "method": "post",
+        "payload": {
+          "taskStates": ["TASK_STATE_OPEN"],
+          "taskTypes": [{"grant": {}}],
+          "expandMask": {"paths": ["*"]},
+          "currentStep": "TASK_SEARCH_CURRENT_STEP_APPROVAL",
+          "createdAfter": "=DATE(\"60 minutes ago\")"
+        },
+        "headers": {
+          "Authorization": "Bearer <<CREDENTIAL>>"
+        }
       },
+      "position": {"x": 240, "y": 165},
       "schedule": [
         {
           "cron": "0 */1 * * *",
@@ -53,11 +64,16 @@
       "disabled": false,
       "name": "Request is Present",
       "description": null,
-      "options": "{\"rules\":[{\"path\":\"=SIZE(search_tasks_that_are_open.body.list)\",\"type\":\"field>value\",\"value\":\"0\"}]}",
-      "position": {
-        "x": 735,
-        "y": 255
+      "options": {
+        "rules": [
+          {
+            "path": "=SIZE(search_tasks_that_are_open.body.list)",
+            "type": "field>value",
+            "value": "0"
+          }
+        ]
       },
+      "position": {"x": 240, "y": 225},
       "type": "trigger",
       "timeSavedUnit": "minutes",
       "timeSavedValue": 0,
@@ -80,11 +96,13 @@
       "disabled": false,
       "name": "Explode all Stuck Requests",
       "description": null,
-      "options": "{\"mode\":\"explode\",\"path\":\"=search_tasks_that_are_open.body.list\",\"to\":\"stuck_request\",\"limit\":\"100\"}",
-      "position": {
-        "x": 735,
-        "y": 315
+      "options": {
+        "mode": "explode",
+        "path": "=search_tasks_that_are_open.body.list",
+        "to": "stuck_request",
+        "limit": "100"
       },
+      "position": {"x": 240, "y": 285},
       "type": "eventTransformation",
       "timeSavedUnit": "minutes",
       "timeSavedValue": 0,
@@ -107,11 +125,16 @@
       "disabled": false,
       "name": "Translate Approver User ID",
       "description": null,
-      "options": "{\"url\":\"https://DOMAIN.conductor.one/api/v1/users/<<explode_all_stuck_requests.stuck_request.task.policy.current.approval.approval.users.userIds[0]>>\",\"content_type\":\"application_json\",\"method\":\"get\",\"payload\":{},\"headers\":{\"Authorization\":\"Bearer <<CREDENTIAL.c1>>\"}}",
-      "position": {
-        "x": 735,
-        "y": 450
+      "options": {
+        "url": "https://api.conductor.one/api/v1/users/<<explode_all_stuck_requests.stuck_request.task.policy.current.approval.approval.users.userIds[0]>>",
+        "content_type": "application_json",
+        "method": "get",
+        "payload": {},
+        "headers": {
+          "Authorization": "Bearer <<CREDENTIAL>>"
+        }
       },
+      "position": {"x": 240, "y": 420},
       "type": "httpRequest",
       "timeSavedUnit": "minutes",
       "timeSavedValue": 0,
@@ -134,11 +157,20 @@
       "disabled": false,
       "name": "Search Slack user by email",
       "description": "Retrieve a single user by looking them up by their registered email address.\n\nLink to documentation: https://api.slack.com/methods/users.lookupByEmail\n\nRequired scope: users:read.email",
-      "options": "{\"url\":\"https://slack.com/api/users.lookupByEmail\",\"content_type\":\"json; charset=utf-8\",\"method\":\"get\",\"payload\":{\"email\":\"<<translate_approver_user_id.body.userView.user.email>>\"},\"headers\":{\"Authorization\":\"Bearer <<CREDENTIAL.slack_security_bot_user_oauth_token>>\"},\"log_error_on_status\":[\"400-499\",\"500\"],\"retry_on_status\":[\"0\",\"500\"]}",
-      "position": {
-        "x": 735,
-        "y": 600
+      "options": {
+        "url": "https://slack.com/api/users.lookupByEmail",
+        "content_type": "json; charset=utf-8",
+        "method": "get",
+        "payload": {
+          "email": "<<translate_approver_user_id.body.userView.user.email>>"
+        },
+        "headers": {
+          "Authorization": "Bearer <<CREDENTIAL>>"
+        },
+        "log_error_on_status": ["400-499", "500"],
+        "retry_on_status": ["0", "500"]
       },
+      "position": {"x": 240, "y": 570},
       "type": "httpRequest",
       "timeSavedUnit": "minutes",
       "timeSavedValue": 0,
@@ -161,11 +193,16 @@
       "disabled": false,
       "name": "Get Approver's Manager Information",
       "description": null,
-      "options": "{\"url\":\"https://DOMAIN.conductor.one/api/v1/users/<<translate_approver_user_id.body.userView.user.managerIds[0]>>\",\"content_type\":\"application_json\",\"method\":\"get\",\"payload\":{},\"headers\":{\"Authorization\":\"Bearer <<CREDENTIAL.c1>>\"}}",
-      "position": {
-        "x": 735,
-        "y": 1035
+      "options": {
+        "url": "https://api.conductor.one/api/v1/users/<<translate_approver_user_id.body.userView.user.managerIds[0]>>",
+        "content_type": "application_json",
+        "method": "get",
+        "payload": {},
+        "headers": {
+          "Authorization": "Bearer <<CREDENTIAL>>"
+        }
       },
+      "position": {"x": 240, "y": 1005},
       "type": "httpRequest",
       "timeSavedUnit": "minutes",
       "timeSavedValue": 0,
@@ -188,11 +225,16 @@
       "disabled": false,
       "name": "Ensure Approver's Manager Isn't Super Important",
       "description": "",
-      "options": "{\"rules\":[{\"path\":\"=get_approver_s_manager_information.body.userView.user.profile.globalJobLevel\",\"type\":\"field<=value\",\"value\":\"10\"}]}",
-      "position": {
-        "x": 735,
-        "y": 1110
+      "options": {
+        "rules": [
+          {
+            "path": "=get_approver_s_manager_information.body.userView.user.profile.globalJobLevel",
+            "type": "field<=value",
+            "value": "10"
+          }
+        ]
       },
+      "position": {"x": 240, "y": 1080},
       "type": "trigger",
       "timeSavedUnit": "minutes",
       "timeSavedValue": 0,
@@ -215,11 +257,20 @@
       "disabled": false,
       "name": "Assign Task to User's Mananger",
       "description": null,
-      "options": "{\"url\":\"https://DOMAIN.conductor.one/api/v1/tasks/<<explode_all_stuck_requests.stuck_request.task.id>>/action/reassign\",\"content_type\":\"application_json\",\"method\":\"post\",\"payload\":{\"policyStepId\":\"<<explode_all_stuck_requests.stuck_request.task.policy.current.id>>\",\"newStepUserIds\":[\"<<get_approver_s_manager_information.body.userView.user.id>>\"],\"comment\":\"The currently-assigned approver appears to be out-of-office, reassigning to approver's manager.\"},\"headers\":{\"Authorization\":\"Bearer <<CREDENTIAL.c1>>\"}}",
-      "position": {
-        "x": 735,
-        "y": 1200
+      "options": {
+        "url": "https://api.conductor.one/api/v1/tasks/<<explode_all_stuck_requests.stuck_request.task.id>>/action/reassign",
+        "content_type": "application_json",
+        "method": "post",
+        "payload": {
+          "policyStepId": "<<explode_all_stuck_requests.stuck_request.task.policy.current.id>>",
+          "newStepUserIds": ["<<get_approver_s_manager_information.body.userView.user.id>>"],
+          "comment": "The currently-assigned approver appears to be out-of-office, reassigning to approver's manager."
+        },
+        "headers": {
+          "Authorization": "Bearer <<CREDENTIAL>>"
+        }
       },
+      "position": {"x": 240, "y": 1170},
       "type": "httpRequest",
       "timeSavedUnit": "minutes",
       "timeSavedValue": 0,
@@ -241,12 +292,17 @@
     {
       "disabled": false,
       "name": "Ensure Approver Isn't In Security",
-      "description": "Security handles special approval workflows that need different handling when team members are OoO.",
-      "options": "{\"rules\":[{\"path\":\"<<translate_approver_user_id.body.userView.user.profile.SupervisoryOrganization>>\",\"type\":\"field!=value\",\"value\":\"Eng Security\"}]}",
-      "position": {
-        "x": 735,
-        "y": 510
+      "description": "Why do we care? Well, Security handles a lot of the \"fall through\" cases where someone requests something unexpected. If one of us is OoO, that means the approval is going to escalate to the manager, which is annoying for them.",
+      "options": {
+        "rules": [
+          {
+            "path": "<<translate_approver_user_id.body.userView.user.profile.SupervisoryOrganization>>",
+            "type": "field!=value",
+            "value": "Security"
+          }
+        ]
       },
+      "position": {"x": 240, "y": 480},
       "type": "trigger",
       "timeSavedUnit": "minutes",
       "timeSavedValue": 0,
@@ -269,11 +325,15 @@
       "disabled": false,
       "name": "Extract JSON from GPT",
       "description": null,
-      "options": "{\"mode\":\"message_only\",\"loop\":false,\"payload\":{\"currently_out_of_office_rating\":\"<<JSON_PARSE(ask_ai_gateway.body.choices[0].message.content).currently_out_of_office_rating>>\",\"decision_description\":\"<<JSON_PARSE(ask_ai_gateway.body.choices[0].message.content).decision_description>>\"}}",
-      "position": {
-        "x": 735,
-        "y": 870
+      "options": {
+        "mode": "message_only",
+        "loop": false,
+        "payload": {
+          "currently_out_of_office_rating": "<<JSON_PARSE(ask_ai_gateway.body.choices[0].message.content).currently_out_of_office_rating>>",
+          "decision_description": "<<JSON_PARSE(ask_ai_gateway.body.choices[0].message.content).decision_description>>"
+        }
       },
+      "position": {"x": 240, "y": 840},
       "type": "eventTransformation",
       "timeSavedUnit": "minutes",
       "timeSavedValue": 0,
@@ -296,11 +356,16 @@
       "disabled": false,
       "name": "Check If OpenAI Thinks Approver is OoO",
       "description": null,
-      "options": "{\"rules\":[{\"path\":\"=extract_json_from_gpt.currently_out_of_office_rating\",\"type\":\"field>=value\",\"value\":\"7\"}]}",
-      "position": {
-        "x": 735,
-        "y": 945
+      "options": {
+        "rules": [
+          {
+            "path": "=extract_json_from_gpt.currently_out_of_office_rating",
+            "type": "field>=value",
+            "value": "7"
+          }
+        ]
       },
+      "position": {"x": 240, "y": 915},
       "type": "trigger",
       "timeSavedUnit": "minutes",
       "timeSavedValue": 0,
@@ -323,11 +388,16 @@
       "disabled": false,
       "name": "Check If Approver Slack Status Set",
       "description": null,
-      "options": "{\"rules\":[{\"path\":\"<<search_slack_user_by_email.body.user.profile.status_text>>\",\"type\":\"field!=value\",\"value\":\"\"}]}",
-      "position": {
-        "x": 735,
-        "y": 735
+      "options": {
+        "rules": [
+          {
+            "path": "<<search_slack_user_by_email.body.user.profile.status_text>>",
+            "type": "field!=value",
+            "value": ""
+          }
+        ]
       },
+      "position": {"x": 240, "y": 705},
       "type": "trigger",
       "timeSavedUnit": "minutes",
       "timeSavedValue": 0,
@@ -350,11 +420,16 @@
       "disabled": false,
       "name": "Check If Slack Profile Found",
       "description": null,
-      "options": "{\"rules\":[{\"path\":\"<<search_slack_user_by_email.body.ok>>\",\"type\":\"field==value\",\"value\":\"true\"}]}",
-      "position": {
-        "x": 735,
-        "y": 675
+      "options": {
+        "rules": [
+          {
+            "path": "<<search_slack_user_by_email.body.ok>>",
+            "type": "field==value",
+            "value": "true"
+          }
+        ]
       },
+      "position": {"x": 240, "y": 645},
       "type": "trigger",
       "timeSavedUnit": "minutes",
       "timeSavedValue": 0,
@@ -377,11 +452,16 @@
       "disabled": false,
       "name": "Check Task Approver Exists",
       "description": null,
-      "options": "{\"rules\":[{\"path\":\"<<explode_all_stuck_requests.stuck_request.task.policy.current.approval.approval.users.userIds[0]>>\",\"type\":\"regex\",\"value\":\".*\"}]}",
-      "position": {
-        "x": 735,
-        "y": 390
+      "options": {
+        "rules": [
+          {
+            "path": "<<explode_all_stuck_requests.stuck_request.task.policy.current.approval.approval.users.userIds[0]>>",
+            "type": "regex",
+            "value": ".*"
+          }
+        ]
       },
+      "position": {"x": 240, "y": 360},
       "type": "trigger",
       "timeSavedUnit": "minutes",
       "timeSavedValue": 0,
@@ -402,14 +482,14 @@
     },
     {
       "disabled": false,
-      "name": "Ask AI Gateway",
-      "description": "Provide a system prompt and user prompt, AI Gateway will respond. ",
-      "options": "{\"url\":\"https://dzpricnofd.execute-api.us-east-1.amazonaws.com/proxy/DOMAIN-bot.security/openai/v1/chat/completions\",\"content_type\":\"application_json\",\"method\":\"post\",\"payload\":{\"model\":\"gpt-4o\",\"messages\":[{\"role\":\"system\",\"content\":\"<<INPUT.system_prompt>>\"},{\"role\":\"user\",\"content\":\"<<INPUT.user_prompt>>\"}],\"temperature\":1,\"max_tokens\":4096,\"top_p\":1,\"frequency_penalty\":0,\"presence_penalty\":0},\"headers\":{\"Authorization\":\"<<CREDENTIAL.tines_ai_gw_invocation_prod>>\"}}",
-      "position": {
-        "x": 735,
-        "y": 810
+      "name": "Ask LLM",
+      "description": null,
+      "options": {
+        "prompt": "Act as an employee within a company. You want to understand if a peer is currently out of office or not. Respond with your recommendation for if the Slack status text you are provided is indicative that the user is out of office as of today, and their out of office will last for more than 1 day, with a rating from 0-10 about your confidence in your decision and a description of why you feel this user is likely out of office already and will be for more than 1 day. You will also be provided today's date to help you determine if a user is currently out of office, or their Slack status is simply warning about a future out of office status.\n\nRespond with JSON with 2 fields: \"decision_description\" and \"currently_out_of_office_rating\". Only use data from the event, do not generate any example data or make any assumptions. Only output JSON plain text, with no formatting, markdown, or code blocks. Start the JSON output with { and end it with }.\n\nToday's date:\n<<DATE(\"now\", \"%A, %B %d, %Y\")\n>>\n\nSlack status text:\n<<search_slack_user_by_email.body.user.profile.status_text>>",
+        "json_mode": false
       },
-      "type": "httpRequest",
+      "position": {"x": 240, "y": 780},
+      "type": "llm",
       "timeSavedUnit": "minutes",
       "timeSavedValue": 0,
       "monitorAllEvents": false,
@@ -422,106 +502,31 @@
       "recordType": null,
       "recordWriters": [],
       "form": null,
-      "integration": {
-        "product": "AI Gateway",
-        "actionOptionsKeys": [],
-        "actionInputs": [
-          {
-            "name": "system_prompt",
-            "description": "",
-            "type": "TEXT",
-            "required": true,
-            "value": "\"Act as an employee within a company. You want to understand if a peer is currently out of office or not. Respond with your recommendation for if the Slack status text you are provided is indicative that the user is out of office as of today, and their out of office will last for more than 1 day, with a rating from 0-10 about your confidence in your decision and a description of why you feel this user is likely out of office already and will be for more than 1 day. You will also be provided today's date to help you determine if a user is currently out of office, or their Slack status is simply warning about a future out of office status.\\n\\nRespond with JSON with 2 fields: \\\"decision_description\\\" and \\\"currently_out_of_office_rating\\\". Only use data from the event, do not generate any example data or make any assumptions. Only output JSON plain text, with no formatting, markdown, or code blocks. Start the JSON output with { and end it with }.\"",
-            "options": "[\"Option 1\", \"Option 2\"]",
-            "isCollapsed": false,
-            "multiSelectEnabled": false,
-            "subType": "HTML",
-            "llmJsonSchema": "{}"
-          },
-          {
-            "name": "user_prompt",
-            "description": "",
-            "type": "TEXT",
-            "required": true,
-            "value": "\"Today's date:\\n<<DATE(\\\"now\\\", \\\"%A, %B %d, %Y\\\")\\n>>\\n\\nSlack status text:\\n<<search_slack_user_by_email.body.user.profile.status_text>>\"",
-            "options": "[\"Option 1\", \"Option 2\"]",
-            "isCollapsed": false,
-            "multiSelectEnabled": false,
-            "subType": "HTML",
-            "llmJsonSchema": "{}"
-          }
-        ]
-      },
-      "createdFromTemplateGuid": "8bc5923539b17f31800a3a895eb078f7",
-      "createdFromTemplateVersion": 2,
+      "createdFromTemplateGuid": null,
+      "createdFromTemplateVersion": null,
       "templateTags": [],
-      "originStoryIdentifier": "cloud:fe39c2bc9bb5ebb0b5e24318b1f3b60d:ffaab8109a8ffc47c317bfe211847434"
+      "originStoryIdentifier": "cloud:fe39c2bc9bb5ebb0b5e24318b1f3b60d:79f7459bb637b4a6dd54c1af1991b5ca"
     }
   ],
   "links": [
-    {
-      "sourceIdentifier": "0",
-      "receiverIdentifier": "1"
-    },
-    {
-      "sourceIdentifier": "1",
-      "receiverIdentifier": "2"
-    },
-    {
-      "sourceIdentifier": "5",
-      "receiverIdentifier": "6"
-    },
-    {
-      "sourceIdentifier": "6",
-      "receiverIdentifier": "7"
-    },
-    {
-      "sourceIdentifier": "9",
-      "receiverIdentifier": "10"
-    },
-    {
-      "sourceIdentifier": "10",
-      "receiverIdentifier": "5"
-    },
-    {
-      "sourceIdentifier": "3",
-      "receiverIdentifier": "8"
-    },
-    {
-      "sourceIdentifier": "8",
-      "receiverIdentifier": "4"
-    },
-    {
-      "sourceIdentifier": "4",
-      "receiverIdentifier": "12"
-    },
-    {
-      "sourceIdentifier": "12",
-      "receiverIdentifier": "11"
-    },
-    {
-      "sourceIdentifier": "2",
-      "receiverIdentifier": "13"
-    },
-    {
-      "sourceIdentifier": "13",
-      "receiverIdentifier": "3"
-    },
-    {
-      "sourceIdentifier": "11",
-      "receiverIdentifier": "14"
-    },
-    {
-      "sourceIdentifier": "14",
-      "receiverIdentifier": "9"
-    }
+    {"sourceIdentifier": "0", "receiverIdentifier": "1"},
+    {"sourceIdentifier": "1", "receiverIdentifier": "2"},
+    {"sourceIdentifier": "5", "receiverIdentifier": "6"},
+    {"sourceIdentifier": "6", "receiverIdentifier": "7"},
+    {"sourceIdentifier": "9", "receiverIdentifier": "10"},
+    {"sourceIdentifier": "10", "receiverIdentifier": "5"},
+    {"sourceIdentifier": "3", "receiverIdentifier": "8"},
+    {"sourceIdentifier": "8", "receiverIdentifier": "4"},
+    {"sourceIdentifier": "4", "receiverIdentifier": "12"},
+    {"sourceIdentifier": "12", "receiverIdentifier": "11"},
+    {"sourceIdentifier": "2", "receiverIdentifier": "13"},
+    {"sourceIdentifier": "13", "receiverIdentifier": "3"},
+    {"sourceIdentifier": "11", "receiverIdentifier": "14"},
+    {"sourceIdentifier": "14", "receiverIdentifier": "9"}
   ],
   "diagramNotes": [
     {
-      "position": {
-        "x": 705,
-        "y": 105
-      },
+      "position": {"x": 213, "y": 80},
       "content": "Check Approver Status - Slack",
       "width": 215
     }
