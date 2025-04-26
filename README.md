@@ -30,6 +30,15 @@ An automated workflow that validates an approver's Out-of-Office status and redi
 
 [Learn more about OOO Checker](./ooo_checker/README.md)
 
+### Role-Engineer
+
+A tool for analyzing AWS IAM roles against their actual usage in CloudTrail to identify and help reduce unused permissions, promoting least privilege security. 
+
+- Analyzes AWS IAM roles defined in Terraform against their actual usage in CloudTrail logs to identify unused permissions
+- Compares defined permissions against real-world usage data to maintain least privilege security principles
+- Supports two modes of operation: commenting on unused permissions or creating pull requests to remove them
+- Integrates with Wiz or AWS CloudTrail as data sources for usage analysis
+
 ## Getting Started
 
 Each tool has its own README with detailed setup and usage instructions. Please refer to the individual tool directories for specific requirements and configuration details.
