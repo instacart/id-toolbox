@@ -1,0 +1,671 @@
+{
+  "schema_version": 26,
+  "standard_lib_version": 83,
+  "action_runtime_version": 35,
+  "name": "Check Approver Status - Slack",
+  "description": null,
+  "guid": "545a533b23e75cd60566df535d4bc047",
+  "slug": "check_approver_status_slack",
+  "agents": [
+    {
+      "type": "Agents::TriggerAgent",
+      "name": "Request is Present",
+      "disabled": false,
+      "description": null,
+      "guid": "80381e724aa59fc1db821b22c170f431",
+      "origin_story_identifier": "cloud:fe39c2bc9bb5ebb0b5e24318b1f3b60d:f2e167d26d0a520ed62970e81a979f96",
+      "options": {
+        "rules": [
+          {
+            "path": "=SIZE(search_tasks_that_are_open.body.list)",
+            "type": "field>value",
+            "value": "0"
+          }
+        ]
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null
+    },
+    {
+      "type": "Agents::EventTransformationAgent",
+      "name": "Explode all Stuck Requests",
+      "disabled": false,
+      "description": null,
+      "guid": "420da4a0f25ed7215d92fd936c882b1a",
+      "origin_story_identifier": "cloud:fe39c2bc9bb5ebb0b5e24318b1f3b60d:f2e167d26d0a520ed62970e81a979f96",
+      "options": {
+        "mode": "explode",
+        "path": "=search_tasks_that_are_open.body.list",
+        "to": "stuck_request",
+        "limit": "100"
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null,
+      "schedule": null
+    },
+    {
+      "type": "Agents::HTTPRequestAgent",
+      "name": "Translate Approver User ID",
+      "disabled": false,
+      "description": null,
+      "guid": "b2fb40829e4ebb89cfca1ac3fcd7381a",
+      "origin_story_identifier": "cloud:fe39c2bc9bb5ebb0b5e24318b1f3b60d:f2e167d26d0a520ed62970e81a979f96",
+      "options": {
+        "url": "https://example.conductor.one/api/v1/users/<<explode_all_stuck_requests.stuck_request.task.policy.current.approval.approval.users.userIds[0]>>",
+        "content_type": "application_json",
+        "method": "get",
+        "payload": {},
+        "headers": {
+          "Authorization": "Bearer <<CREDENTIAL.c1>>"
+        }
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null,
+      "schedule": null
+    },
+    {
+      "type": "Agents::HTTPRequestAgent",
+      "name": "Search Slack user by email",
+      "disabled": false,
+      "description": "Retrieve a single user by looking them up by their registered email address.\n\nLink to documentation: https://api.slack.com/methods/users.lookupByEmail\n\nRequired scope: users:read.email",
+      "guid": "9c069c224e76b6ed924ce14f09fa4375",
+      "origin_story_identifier": "cloud:fe39c2bc9bb5ebb0b5e24318b1f3b60d:9af138a8ce1a8bc147369add767b34c8",
+      "options": {
+        "url": "https://slack.com/api/users.lookupByEmail",
+        "content_type": "json; charset=utf-8",
+        "method": "get",
+        "payload": {
+          "email": "<<translate_approver_user_id.body.userView.user.email>>"
+        },
+        "headers": {
+          "Authorization": "Bearer <<CREDENTIAL.slack_security_bot_user_oauth_token>>"
+        },
+        "log_error_on_status": [
+          "400-499",
+          "500"
+        ],
+        "retry_on_status": [
+          "0",
+          "500"
+        ]
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null,
+      "schedule": null
+    },
+    {
+      "type": "Agents::HTTPRequestAgent",
+      "name": "Get Approver's Manager Information",
+      "disabled": false,
+      "description": null,
+      "guid": "231ec0720c51d4f38bb7a083f76627fe",
+      "origin_story_identifier": "cloud:fe39c2bc9bb5ebb0b5e24318b1f3b60d:f2e167d26d0a520ed62970e81a979f96",
+      "options": {
+        "url": "https://example.conductor.one/api/v1/users/<<translate_approver_user_id.body.userView.user.managerIds[0]>>",
+        "content_type": "application_json",
+        "method": "get",
+        "payload": {},
+        "headers": {
+          "Authorization": "Bearer <<CREDENTIAL.c1>>"
+        }
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null,
+      "schedule": null
+    },
+    {
+      "type": "Agents::TriggerAgent",
+      "name": "Ensure Approver's Manager Isn't Super Important",
+      "disabled": false,
+      "description": "",
+      "guid": "745db4277ee0280c1cc6858a119c7e48",
+      "origin_story_identifier": "cloud:fe39c2bc9bb5ebb0b5e24318b1f3b60d:7d1b8e278df1d019d8c177bcea99f672",
+      "options": {
+        "rules": [
+          {
+            "path": "=get_approver_s_manager_information.body.userView.user.profile.globalJobLevel",
+            "type": "field<=value",
+            "value": "10"
+          }
+        ]
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null
+    },
+    {
+      "type": "Agents::HTTPRequestAgent",
+      "name": "Assign Task to User's Mananger",
+      "disabled": false,
+      "description": null,
+      "guid": "d95c12c2bd139c8770b2787de35dd788",
+      "origin_story_identifier": "cloud:fe39c2bc9bb5ebb0b5e24318b1f3b60d:f2e167d26d0a520ed62970e81a979f96",
+      "options": {
+        "url": "https://example.conductor.one/api/v1/tasks/<<explode_all_stuck_requests.stuck_request.task.id>>/action/reassign",
+        "content_type": "application_json",
+        "method": "post",
+        "payload": {
+          "policyStepId": "<<explode_all_stuck_requests.stuck_request.task.policy.current.id>>",
+          "newStepUserIds": [
+            "<<get_approver_s_manager_information.body.userView.user.id>>"
+          ],
+          "comment": "The currently-assigned approver appears to be out-of-office, reassigning to approver's manager."
+        },
+        "headers": {
+          "Authorization": "Bearer <<CREDENTIAL.c1>>"
+        }
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null,
+      "schedule": null
+    },
+    {
+      "type": "Agents::TriggerAgent",
+      "name": "Ensure Approver Isn't In Security",
+      "disabled": false,
+      "description": "Why do we care? Well, Security handles a lot of the \"fall through\" cases where someone requests something unexpected. If one of us is OoO, that means the approval is going to escalate to security management, which is annoying for them.",
+      "guid": "ea201e3e7a1434b036f9d79b5bcd6b32",
+      "origin_story_identifier": "cloud:fe39c2bc9bb5ebb0b5e24318b1f3b60d:7d1b8e278df1d019d8c177bcea99f672",
+      "options": {
+        "rules": [
+          {
+            "path": "<<translate_approver_user_id.body.userView.user.profile.SupervisoryOrganization>>",
+            "type": "field!=value",
+            "value": "Eng Security"
+          }
+        ]
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null
+    },
+    {
+      "type": "Agents::EventTransformationAgent",
+      "name": "Extract JSON from GPT",
+      "disabled": false,
+      "description": null,
+      "guid": "85cf50ed79a6bf64ef6a1c906e233c53",
+      "origin_story_identifier": "cloud:fe39c2bc9bb5ebb0b5e24318b1f3b60d:7d1b8e278df1d019d8c177bcea99f672",
+      "options": {
+        "mode": "message_only",
+        "loop": false,
+        "payload": {
+          "currently_out_of_office_rating": "<<JSON_PARSE(ask_openai_to_give_opinion_on_ooo.body.output[0].content[0].text).currently_out_of_office_rating>>",
+          "decision_description": "<<JSON_PARSE(ask_openai_to_give_opinion_on_ooo.body.output[0].content[0].text).decision_description>>"
+        }
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null,
+      "schedule": null
+    },
+    {
+      "type": "Agents::TriggerAgent",
+      "name": "Check If OpenAI Thinks Approver is OoO",
+      "disabled": false,
+      "description": null,
+      "guid": "e66264c80aab7a87a48b3f7d361feaa3",
+      "origin_story_identifier": "cloud:fe39c2bc9bb5ebb0b5e24318b1f3b60d:7d1b8e278df1d019d8c177bcea99f672",
+      "options": {
+        "rules": [
+          {
+            "path": "=extract_json_from_gpt.currently_out_of_office_rating",
+            "type": "field>=value",
+            "value": "7"
+          }
+        ]
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null
+    },
+    {
+      "type": "Agents::TriggerAgent",
+      "name": "Check If Approver Slack Status Set",
+      "disabled": false,
+      "description": null,
+      "guid": "ba409e69b6496665a7b4fddbef7fd65d",
+      "origin_story_identifier": "cloud:fe39c2bc9bb5ebb0b5e24318b1f3b60d:7d1b8e278df1d019d8c177bcea99f672",
+      "options": {
+        "rules": [
+          {
+            "path": "<<search_slack_user_by_email.body.user.profile.status_text>>",
+            "type": "field!=value",
+            "value": ""
+          }
+        ]
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null
+    },
+    {
+      "type": "Agents::TriggerAgent",
+      "name": "Check If Slack Profile Found",
+      "disabled": false,
+      "description": null,
+      "guid": "3b0722ce78a90416bdb79bcd999cf95e",
+      "origin_story_identifier": "cloud:fe39c2bc9bb5ebb0b5e24318b1f3b60d:7d1b8e278df1d019d8c177bcea99f672",
+      "options": {
+        "rules": [
+          {
+            "path": "<<search_slack_user_by_email.body.ok>>",
+            "type": "field==value",
+            "value": "true"
+          }
+        ]
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null
+    },
+    {
+      "type": "Agents::TriggerAgent",
+      "name": "Check Task Approver Exists",
+      "disabled": false,
+      "description": null,
+      "guid": "7ee09afcd824915738b7eddeae922ba6",
+      "origin_story_identifier": "cloud:fe39c2bc9bb5ebb0b5e24318b1f3b60d:7d1b8e278df1d019d8c177bcea99f672",
+      "options": {
+        "rules": [
+          {
+            "path": "<<explode_all_stuck_requests.stuck_request.task.policy.current.approval.approval.users.userIds[0]>>",
+            "type": "regex",
+            "value": ".*"
+          }
+        ]
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null
+    },
+    {
+      "type": "Agents::HTTPRequestAgent",
+      "name": "Ask OpenAI To Give Opinion on OoO",
+      "disabled": false,
+      "description": "",
+      "guid": "66df30e6249dbb1a7a7e63e5c09f43ac",
+      "origin_story_identifier": "cloud:cf89515d7caa9b49006ad5a414bdd380:764abda0a56dc2745376a76b34c616c8",
+      "options": {
+        "url": "https://api.openai.com/v1/responses",
+        "method": "post",
+        "content_type": "application_json",
+        "payload": {
+          "model": "gpt-4.1-mini",
+          "input": [
+            {
+              "role": "system",
+              "content": [
+                {
+                  "type": "input_text",
+                  "text": "Act as an employee within a company. You want to understand if a peer is currently out of office or not. Respond with your recommendation for if the Slack status text you are provided is indicative that the user is out of office as of today, and their out of office will last for more than 1 day, with a rating from 0-10 about your confidence in your decision and a description of why you feel this user is likely out of office already and will be for more than 1 day. You will also be provided today's date to help you determine if a user is currently out of office, or their Slack status is simply warning about a future out of office status.\n\nRespond with JSON. Only use data from the event, do not generate any example data or make any assumptions."
+                }
+              ]
+            },
+            {
+              "role": "user",
+              "content": [
+                {
+                  "type": "input_text",
+                  "text": "Today's date:\n<<DATE(\"now\", \"%A, %B %d, %Y\")\n>>\n\nSlack status text: out for a week\n<<search_slack_user_by_email.body.user.profile.status_text>>"
+                }
+              ]
+            }
+          ],
+          "text": {
+            "format": {
+              "type": "json_schema",
+              "name": "out_of_office_detection",
+              "strict": true,
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "decision_description": {
+                    "type": "string",
+                    "description": "A description explaining why the user is believed to be currently out of office for more than one day."
+                  },
+                  "currently_out_of_office_rating": {
+                    "type": "integer",
+                    "description": "A rating from 0 to 10 indicating confidence in the decision. 0 = definitely not out of office, 10 = definitely out of office."
+                  }
+                },
+                "required": [
+                  "decision_description",
+                  "currently_out_of_office_rating"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          "reasoning": {},
+          "temperature": 1,
+          "max_output_tokens": 2048,
+          "top_p": 1,
+          "store": false
+        },
+        "headers": {
+          "Authorization": "Bearer <<CREDENTIAL.openai>>"
+        }
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null,
+      "schedule": null
+    },
+    {
+      "type": "Agents::HTTPRequestAgent",
+      "name": "Search Tasks that are OPEN",
+      "disabled": false,
+      "description": null,
+      "guid": "7b0b3e6669b7b2e916b45291a3db1454",
+      "origin_story_identifier": "cloud:5b75289dbe8ceb05152b51181351c441:be5796ec253d083ca384b19a284ae067",
+      "options": {
+        "url": "https://example.conductor.one/api/v1/search/tasks",
+        "content_type": "application_json",
+        "method": "post",
+        "payload": {
+          "taskStates": [
+            "TASK_STATE_OPEN"
+          ],
+          "taskTypes": [
+            {
+              "grant": {}
+            }
+          ],
+          "expandMask": {
+            "paths": [
+              "*"
+            ]
+          },
+          "currentStep": "TASK_SEARCH_CURRENT_STEP_APPROVAL",
+          "createdAfter": "=DATE(\"60 minutes ago\")"
+        },
+        "headers": {
+          "Authorization": "Bearer <<CREDENTIAL.c1>>"
+        }
+      },
+      "reporting": {
+        "time_saved_value": 0,
+        "time_saved_unit": "minutes"
+      },
+      "monitoring": {
+        "monitor_all_events": false,
+        "monitor_failures": false,
+        "monitor_no_events_emitted": null
+      },
+      "template": {
+        "created_from_template_guid": null,
+        "created_from_template_version": null,
+        "template_tags": []
+      },
+      "width": null,
+      "schedule": [
+        {
+          "cron": "0 */1 * * *",
+          "timezone": "America/New_York"
+        }
+      ]
+    }
+  ],
+  "diagram_notes": [],
+  "links": [
+    {
+      "source": 0,
+      "receiver": 1
+    },
+    {
+      "source": 1,
+      "receiver": 12
+    },
+    {
+      "source": 2,
+      "receiver": 7
+    },
+    {
+      "source": 3,
+      "receiver": 11
+    },
+    {
+      "source": 4,
+      "receiver": 5
+    },
+    {
+      "source": 5,
+      "receiver": 6
+    },
+    {
+      "source": 7,
+      "receiver": 3
+    },
+    {
+      "source": 8,
+      "receiver": 9
+    },
+    {
+      "source": 9,
+      "receiver": 4
+    },
+    {
+      "source": 10,
+      "receiver": 13
+    },
+    {
+      "source": 11,
+      "receiver": 10
+    },
+    {
+      "source": 12,
+      "receiver": 2
+    },
+    {
+      "source": 13,
+      "receiver": 8
+    },
+    {
+      "source": 14,
+      "receiver": 0
+    }
+  ],
+  "diagram_layout": "{\"80381e724aa59fc1db821b22c170f431\":[0,15],\"420da4a0f25ed7215d92fd936c882b1a\":[0,90],\"b2fb40829e4ebb89cfca1ac3fcd7381a\":[0,240],\"9c069c224e76b6ed924ce14f09fa4375\":[0,405],\"231ec0720c51d4f38bb7a083f76627fe\":[0,900],\"745db4277ee0280c1cc6858a119c7e48\":[0,990],\"d95c12c2bd139c8770b2787de35dd788\":[0,1080],\"ea201e3e7a1434b036f9d79b5bcd6b32\":[0,315],\"85cf50ed79a6bf64ef6a1c906e233c53\":[0,735],\"e66264c80aab7a87a48b3f7d361feaa3\":[0,810],\"ba409e69b6496665a7b4fddbef7fd65d\":[0,555],\"3b0722ce78a90416bdb79bcd999cf95e\":[0,480],\"7ee09afcd824915738b7eddeae922ba6\":[0,165],\"66df30e6249dbb1a7a7e63e5c09f43ac\":[0,645],\"7b0b3e6669b7b2e916b45291a3db1454\":[0,-60]}",
+  "story_library_metadata": {},
+  "monitor_failures": false,
+  "synchronous_webhooks_enabled": false,
+  "integrations": [],
+  "parent_only_send_to_story": false,
+  "keep_events_for": 86400,
+  "reporting_status": true,
+  "send_to_story_enabled": false,
+  "entry_agent_guid": null,
+  "exit_agent_guids": [],
+  "api_entry_action_guids": [],
+  "api_exit_action_guids": [],
+  "send_to_story_access": null,
+  "send_to_story_access_source": 0,
+  "send_to_story_skill_use_requires_confirmation": true,
+  "pages": [],
+  "tags": [],
+  "time_saved_unit": "minutes",
+  "time_saved_value": 0,
+  "origin_story_identifier": "cloud:cf89515d7caa9b49006ad5a414bdd380:545a533b23e75cd60566df535d4bc047",
+  "recipients": [],
+  "integration_product": null,
+  "integration_vendor": null,
+  "llm_product_instructions": "",
+  "send_to_stories": [],
+  "exported_at": "2025-04-26T04:46:32Z",
+  "icon": ":lock:"
+}

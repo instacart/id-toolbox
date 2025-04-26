@@ -8,16 +8,16 @@ This repository contains security tools that utilize AI to streamline and enhanc
 
 ## Tools
 
-### PermissionPasta
+### AccessTailor
 
-A powerful AI-driven tool for managing and redirecting users' requests for entitlements. PermissionPasta helps security teams:
+A powerful AI-driven tool for managing and redirecting users' requests for entitlements. AccessTailor helps security teams:
 
 - Process access requests intelligently
 - Streamline permission management workflows
 - Generate contextually appropriate responses to entitlement requests
 - Interface with various identity systems (AWS, GitHub, Okta, etc.)
 
-[Learn more about PermissionPasta](./permission_pasta/README.md)
+[Learn more about AccessTailor](./access_tailor/README.md)
 
 ### OOO Checker
 
@@ -29,6 +29,17 @@ An automated workflow that validates an approver's Out-of-Office status and redi
 - Prevents delays in critical access management workflows
 
 [Learn more about OOO Checker](./ooo_checker/README.md)
+
+### Role-Engineer
+
+A tool for analyzing AWS IAM roles against their actual usage in CloudTrail to identify and help reduce unused permissions, promoting least privilege security. 
+
+- Analyzes AWS IAM roles defined in Terraform against their actual usage in CloudTrail logs to identify unused permissions
+- Compares defined permissions against real-world usage data to maintain least privilege security principles
+- Supports two modes of operation: commenting on unused permissions or creating pull requests to remove them
+- Integrates with Wiz or AWS CloudTrail as data sources for usage analysis
+
+[Learn more about Role-Engineer](./role_engineer/README.md)
 
 ## Getting Started
 

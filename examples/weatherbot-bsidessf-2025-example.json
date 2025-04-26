@@ -1,0 +1,263 @@
+{
+    "schema_version": 26,
+    "standard_lib_version": 83,
+    "action_runtime_version": 35,
+    "name": "WeatherBot BSidesSF 2025 Example",
+    "description": null,
+    "guid": "3de2282bcaac247d34009b0245c316ba",
+    "slug": "weatherbot_bsidessf_2025_example",
+    "agents": [
+      {
+        "type": "Agents::HTTPRequestAgent",
+        "name": "Ask OpenAI To Search the Weather",
+        "disabled": false,
+        "description": "Created from cURL command",
+        "guid": "a993f2b62e8d0a3d1ef2f855bece603b",
+        "origin_story_identifier": "cloud:cf89515d7caa9b49006ad5a414bdd380:764abda0a56dc2745376a76b34c616c8",
+        "options": {
+          "url": "https://api.openai.com/v1/responses",
+          "method": "post",
+          "content_type": "application_json",
+          "payload": {
+            "model": "gpt-4.1-mini",
+            "input": [
+              {
+                "role": "system",
+                "content": [
+                  {
+                    "type": "input_text",
+                    "text": "You answer requests about the weather, taking in a location as a string and responding in JSON with your answer."
+                  }
+                ]
+              },
+              {
+                "role": "user",
+                "content": [
+                  {
+                    "type": "input_text",
+                    "text": "<<webhook_action.body.location>>"
+                  }
+                ]
+              }
+            ],
+            "text": {
+              "format": {
+                "type": "json_schema",
+                "name": "weather_forecast",
+                "strict": true,
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "location": {
+                      "type": "string",
+                      "description": "The location for which the weather is being forecasted."
+                    },
+                    "today_forecast": {
+                      "type": "object",
+                      "description": "Today's forecasted weather.",
+                      "properties": {
+                        "temperature": {
+                          "type": "number",
+                          "description": "The temperature for today."
+                        },
+                        "conditions": {
+                          "type": "string",
+                          "description": "The weather conditions for today (e.g. sunny, rainy)."
+                        },
+                        "humidity": {
+                          "type": "number",
+                          "description": "The humidity level for today."
+                        }
+                      },
+                      "required": [
+                        "temperature",
+                        "conditions",
+                        "humidity"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "week_forecast": {
+                      "type": "array",
+                      "description": "Weather forecast for the remainder of the week.",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "day": {
+                            "type": "string",
+                            "description": "The day of the week for the forecast."
+                          },
+                          "high": {
+                            "type": "number",
+                            "description": "The high temperature for the day."
+                          },
+                          "low": {
+                            "type": "number",
+                            "description": "The low temperature for the day."
+                          },
+                          "conditions": {
+                            "type": "string",
+                            "description": "The weather conditions for the day."
+                          }
+                        },
+                        "required": [
+                          "day",
+                          "high",
+                          "low",
+                          "conditions"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "location",
+                    "today_forecast",
+                    "week_forecast"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "reasoning": {},
+            "tools": [
+              {
+                "type": "web_search_preview",
+                "user_location": {
+                  "type": "approximate"
+                },
+                "search_context_size": "medium"
+              }
+            ],
+            "temperature": 1,
+            "max_output_tokens": 2048,
+            "top_p": 1,
+            "store": true
+          },
+          "headers": {
+            "Authorization": "Bearer <<CREDENTIAL.openai>>"
+          }
+        },
+        "reporting": {
+          "time_saved_value": 0,
+          "time_saved_unit": "minutes"
+        },
+        "monitoring": {
+          "monitor_all_events": false,
+          "monitor_failures": false,
+          "monitor_no_events_emitted": null
+        },
+        "template": {
+          "created_from_template_guid": null,
+          "created_from_template_version": null,
+          "template_tags": []
+        },
+        "width": null,
+        "schedule": null
+      },
+      {
+        "type": "Agents::EventTransformationAgent",
+        "name": "Extract JSON from GPT Response",
+        "disabled": false,
+        "description": null,
+        "guid": "3daccfdc203d265d5fa5e3fa51b292a2",
+        "origin_story_identifier": "cloud:fe39c2bc9bb5ebb0b5e24318b1f3b60d:7d1b8e278df1d019d8c177bcea99f672",
+        "options": {
+          "mode": "message_only",
+          "loop": false,
+          "payload": {
+            "current_temperature": "<<JSON_PARSE(ask_openai_to_search_the_weather.body.output[1].content[0].text).today_forecast.temperature>>",
+            "current_conditions": "<<JSON_PARSE(ask_openai_to_search_the_weather.body.output[1].content[0].text).today_forecast.conditions>>"
+          }
+        },
+        "reporting": {
+          "time_saved_value": 0,
+          "time_saved_unit": "minutes"
+        },
+        "monitoring": {
+          "monitor_all_events": false,
+          "monitor_failures": false,
+          "monitor_no_events_emitted": null
+        },
+        "template": {
+          "created_from_template_guid": null,
+          "created_from_template_version": null,
+          "template_tags": []
+        },
+        "width": null,
+        "schedule": null
+      },
+      {
+        "type": "Agents::WebhookAgent",
+        "name": "Webhook Action",
+        "disabled": false,
+        "description": null,
+        "guid": "b221dab1f04cfb42a33c218ce0595528",
+        "origin_story_identifier": "cloud:cf89515d7caa9b49006ad5a414bdd380:764abda0a56dc2745376a76b34c616c8",
+        "options": {
+          "path": "00ebff9c6332507fcbfa4b8075a0596c",
+          "secret": "3b58474011b515be17a5c00ad5b9abe8",
+          "verbs": "get,post"
+        },
+        "reporting": {
+          "time_saved_value": 0,
+          "time_saved_unit": "minutes"
+        },
+        "monitoring": {
+          "monitor_all_events": false,
+          "monitor_failures": false,
+          "monitor_no_events_emitted": null
+        },
+        "template": {
+          "created_from_template_guid": null,
+          "created_from_template_version": null,
+          "template_tags": []
+        },
+        "width": null
+      }
+    ],
+    "diagram_notes": [],
+    "links": [
+      {
+        "source": 0,
+        "receiver": 1
+      },
+      {
+        "source": 2,
+        "receiver": 0
+      }
+    ],
+    "diagram_layout": "{\"a993f2b62e8d0a3d1ef2f855bece603b\":[210,210],\"3daccfdc203d265d5fa5e3fa51b292a2\":[210,300],\"b221dab1f04cfb42a33c218ce0595528\":[210,135]}",
+    "story_library_metadata": {},
+    "monitor_failures": false,
+    "synchronous_webhooks_enabled": true,
+    "integrations": [],
+    "parent_only_send_to_story": false,
+    "keep_events_for": 86400,
+    "reporting_status": true,
+    "send_to_story_enabled": false,
+    "entry_agent_guid": null,
+    "exit_agent_guids": [],
+    "api_entry_action_guids": [
+      "b221dab1f04cfb42a33c218ce0595528"
+    ],
+    "api_exit_action_guids": [
+      "3daccfdc203d265d5fa5e3fa51b292a2"
+    ],
+    "send_to_story_access": null,
+    "send_to_story_access_source": 0,
+    "send_to_story_skill_use_requires_confirmation": true,
+    "pages": [],
+    "tags": [],
+    "time_saved_unit": "minutes",
+    "time_saved_value": 0,
+    "origin_story_identifier": "cloud:cf89515d7caa9b49006ad5a414bdd380:3de2282bcaac247d34009b0245c316ba",
+    "recipients": [
+      "sullivan.matt@gmail.com"
+    ],
+    "integration_product": null,
+    "integration_vendor": null,
+    "llm_product_instructions": "",
+    "send_to_stories": [],
+    "exported_at": "2025-04-24T15:34:39Z",
+    "icon": ":simple_weather_api:"
+  }
