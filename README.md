@@ -8,16 +8,16 @@ This repository contains security tools that utilize AI to streamline and enhanc
 
 ## Tools
 
-### PermissionPasta
+### AccessTailor
 
-A powerful AI-driven tool for managing and redirecting users' requests for entitlements. PermissionPasta helps security teams:
+A powerful AI-driven tool for managing and redirecting users' requests for entitlements. AccessTailor helps security teams:
 
 - Process access requests intelligently
 - Streamline permission management workflows
 - Generate contextually appropriate responses to entitlement requests
 - Interface with various identity systems (AWS, GitHub, Okta, etc.)
 
-[Learn more about PermissionPasta](./permission_pasta/README.md)
+[Learn more about AccessTailor](./access_tailor/README.md)
 
 ### OOO Checker
 
