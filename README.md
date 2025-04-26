@@ -39,6 +39,8 @@ A tool for analyzing AWS IAM roles against their actual usage in CloudTrail to i
 - Supports two modes of operation: commenting on unused permissions or creating pull requests to remove them
 - Integrates with Wiz or AWS CloudTrail as data sources for usage analysis
 
+[Learn more about Role-Engineer](./role_engineer/README.md)
+
 ## Getting Started
 
 Each tool has its own README with detailed setup and usage instructions. Please refer to the individual tool directories for specific requirements and configuration details.
